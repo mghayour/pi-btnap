@@ -60,8 +60,14 @@ Installation
 To install, just run the following commands (on Raspbian Jessie-Lite you
 have to install git first):
 
+### download
     git clone https://github.com/bablokb/pi-btnap
-    sudo pi-btnap/tools/install-btnap  server [ifname] | client
+
+### server mode
+    sudo pi-btnap/tools/install-btnap  server [ifname]
+### client mode
+    sudo pi-btnap/tools/install-btnap  client [mac]
+
 
 The argument to `install-btnap` selects the role of the system. If you
 select the `server` role and provide an interface name, the system
