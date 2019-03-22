@@ -197,7 +197,7 @@ def main(args=None):
 
 	elif opts.call == 'client':
 		
-		def connect_to_client:
+		def connect_to_client():
 			dev_remote = find_device(opts.remote_addr, devs.values()[0])
 			log.debug( 'Using remote device (addr: %s): %s',
 				prop_get(dev_remote, 'Address'), dev_remote.object_path )
