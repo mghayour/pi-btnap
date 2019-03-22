@@ -113,6 +113,8 @@ def main(args=None):
 	cmd.add_argument('remote_addr', help='Remote device address to connect to.')
 	cmd.add_argument('-w', '--wait', action='store_true',
 		help='Go into an endless wait-loop after connection, terminating it on exit.')
+	cmd.add_argument('-f', '--forever', action='store_true',
+		help='Go into an endless wait-loop, retry if client connection failed.')
 	cmd.add_argument('-c', '--if-not-connected', action='store_true',
 		help='Dont raise error if connection is already established.')
 	cmd.add_argument('-r', '--reconnect', action='store_true',
@@ -194,29 +196,43 @@ def main(args=None):
 
 
 	elif opts.call == 'client':
-		dev_remote = find_device(opts.remote_addr, devs.values()[0])
-		log.debug( 'Using remote device (addr: %s): %s',
-			prop_get(dev_remote, 'Address'), dev_remote.object_path )
-		try: dev_remote.ConnectProfile(opts.uuid)
-		except: pass # no idea why it fails sometimes, but still creates dbus interface
+		
+		def connect_to_client:
+			dev_remote = find_device(opts.remote_addr, devs.values()[0])
+			log.debug( 'Using remote device (addr: %s): %s',
+				prop_get(dev_remote, 'Address'), dev_remote.object_path )
+			try: dev_remote.ConnectProfile(opts.uuid)
+			except: pass # no idea why it fails sometimes, but still creates dbus interface
 
-		net = dbus.Interface(dev_remote, 'org.bluez.Network1')
-		for n in xrange(2):
-			try: iface = net.Connect(opts.uuid)
-			except dbus.exceptions.DBusException as err:
-				if err.get_dbus_name() != 'org.bluez.Error.Failed': raise
-				connected = prop_get(net, 'Connected')
-				if not connected: raise
-				if opts.reconnect:
-					log.debug( 'Detected pre-established connection'
-						' (iface: %s), reconnecting', prop_get(net, 'Interface') )
-					net.Disconnect()
-					continue
-				if not opts.if_not_connected: raise
-			else: break
-		log.debug(
-			'Connected to network (dev_remote: %s, addr: %s) uuid %r with iface: %s',
-			dev_remote.object_path, prop_get(dev_remote, 'Address'), opts.uuid, iface )
+			net = dbus.Interface(dev_remote, 'org.bluez.Network1')
+			for n in xrange(2):
+				try: iface = net.Connect(opts.uuid)
+				except dbus.exceptions.DBusException as err:
+					if err.get_dbus_name() != 'org.bluez.Error.Failed': raise
+					connected = prop_get(net, 'Connected')
+					if not connected: raise
+					if opts.reconnect:
+						log.debug( 'Detected pre-established connection'
+							' (iface: %s), reconnecting', prop_get(net, 'Interface') )
+						net.Disconnect()
+						continue
+					if not opts.if_not_connected: raise
+				else: break
+			log.debug(
+				'Connected to network (dev_remote: %s, addr: %s) uuid %r with iface: %s',
+				dev_remote.object_path, prop_get(dev_remote, 'Address'), opts.uuid, iface )
+		
+		if not opts.forever:
+			connect_to_client();
+		else:
+			log.debug('Forever mode, will reconnect each 30secs')
+			
+		while opts.forever:
+			try:
+				connect_to_client();
+			except:
+				log.debug('Connection error, retry at 30secs')
+			time.sleep(30)
 
 		if opts.wait:
 			try:
