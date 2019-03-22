@@ -34,5 +34,5 @@ fi
 if [ "$MODE" = "server" ]; then
   exec /usr/local/sbin/btnap.service.py ${DEBUG:+--debug} server $BR_DEV
 else
-  exec /usr/local/sbin/btnap.service.py ${DEBUG:+--debug} client $REMOTE_DEV
+  exec /usr/local/sbin/btnap.service.py ${DEBUG:+--debug} client $REMOTE_DEV -f
 fi
