@@ -12,7 +12,14 @@
 # --- defaults used during installation   ----------------------------------
 
 MODE="${1:-server}"     # "server" or "client" (default is "server")
-ADD_IF="$2"             # interface to add to the bridge, e.g. eth0
+ADD_IF=""               # interface to add to the bridge, e.g. eth0
+REMOTE_DEV=""
+
+if [ "$MODE" = "server" ]; then
+  ADD_IF="$2"           # interface to add to the bridge, e.g. eth0
+else
+  REMOTE_DEV="$2"       # mac of remote device
+fi
 
 BR_DEV="br0"               # bridge device
 BR_IP="192.168.20.99/24"   # IP of bridge-device
@@ -67,9 +74,9 @@ BR_GW="$BR_GW"      # GW-IP for bridge
 ADD_IF="$ADD_IF"          # interface to add to the bridge, e.g. eth0
 
 # client configuration
-REMOTE_DEV=""           # MAC of remote BT nap server
+REMOTE_DEV="$REMOTE_DEV"  # MAC of remote BT nap server
 
-DEBUG=""                # set to anything to enable debug-messages
+DEBUG=""                  # set to anything to enable debug-messages
 EOF
 
 chmod 644 /etc/btnap.conf
@@ -108,4 +115,5 @@ systemctl enable btnap.service
 
 # --- final configuration is manual   ---------------------------------------
 
-echo "please edit /etc/btnap.conf and start btnap.service afterwards"
+echo "please edit /etc/btnap.conf and start btnap.service afterwards using below command"
+echo "service btnap start"
